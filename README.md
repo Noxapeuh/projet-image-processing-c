@@ -1,2 +1,1 @@
-# projet-image-processing-c
-ROUSSELLE Cyril et OUMEZZAOUCHE Rayan
+#ROUSSELLE Cyril et OUMEZZAOUCHE Rayan
