@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+//Partie 1
+
+// Fonction permettant de charger une image BMP depuis un fichier filename, renvoyant l'image chargée
 t_bmp8 * bmp8_loadImage(const char * filename) {
     FILE *file = fopen(filename, "rb");
     if (file == NULL) {
@@ -27,9 +31,9 @@ t_bmp8 * bmp8_loadImage(const char * filename) {
     return img;
 }
 
+// Fonction permettant de sauvegarder une image BMP dans un fichier filename
 void bmp8_saveImage(const char * filename, t_bmp8 * img) {
     FILE * file = fopen(filename,"wb");
-
 
     if ( file ==  NULL ) {
         printf("Erreur : Impossible d'ouvrir le fichier\n");
@@ -45,11 +49,12 @@ void bmp8_saveImage(const char * filename, t_bmp8 * img) {
     fclose(file);
 }
 
+// Fonction permettant de libérer la mémoire allouée à une image BMP
 void bmp8_free(t_bmp8 * img) {
     free(img);
 }
 
-
+// Fonction permettant d'afficher des informations sur une image BMP
 void bmp8_printInfo(t_bmp8 * img) {
     printf("Image Info :\n");
     printf("\tWidth : %d\n", img->width);
@@ -58,6 +63,7 @@ void bmp8_printInfo(t_bmp8 * img) {
     printf("\tSize : %d\n", img->height*img->width);
 }
 
+// Fonction permettant d'appliquer un efet negatif sur une image BMP passée en paramètre
 void bmp8_negative(t_bmp8 * img) {
     for (int i = 0; i < img->height; i++) {
         for (int j = 0; j < img->width; j++) {
@@ -66,6 +72,7 @@ void bmp8_negative(t_bmp8 * img) {
     }
 }
 
+// Fonction permettant de changer la luminosité sur une image BMP passée en paramètre
 void bmp8_brightness(t_bmp8 * img, int value){
     for (int i = 0; i < img->height; i++) {
         for (int j = 0; j < img->width; j++) {
@@ -80,6 +87,7 @@ void bmp8_brightness(t_bmp8 * img, int value){
     }
 }
 
+// Fonction permettant d'appliquer un efet threshold sur une image BMP passée en paramètre
 void bmp8_threshold(t_bmp8 * img, int threshold) {
     for (int i = 0; i < img->height; i++) {
         for (int j = 0; j < img->width; j++) {
@@ -92,6 +100,7 @@ void bmp8_threshold(t_bmp8 * img, int threshold) {
     }
 }
 
+// Fonction permettant d'appliquer n'importe quel filtre à partir de son noyau sur une image BMP passée en paramètre
 void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
     int n = kernelSize/2;
 
@@ -117,7 +126,9 @@ void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
         }
     }
 
-    free(temp); // libérer la mémoire allouée
+    free(temp);
 }
+
+//Partie 2
 
 
