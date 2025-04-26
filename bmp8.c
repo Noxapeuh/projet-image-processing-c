@@ -1,18 +1,54 @@
 #include "bmp8.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-t_bmp8 * bmp8_loadImage(const char * filename){
-    FILE * file = fopen(filename, "rb");
-    t_bmp8 *img;
+t_bmp8 * bmp8_loadImage(const char * filename) {
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) {
+        printf("Erreur : Impossible d'ouvrir le fichier '%s'\n", filename);
+        return NULL;
+    }
+
+    t_bmp8 *img = (t_bmp8 *)malloc(sizeof(t_bmp8));
+
     fread(img->header, 1, 54, file);
+
     img->width = *(unsigned int *)(img->header + 18);
     img->height = *(unsigned int *)(img->header + 22);
-    img->colorDepth = *(unsigned int *)(img->header + 28);
-    img->data = *(unsigned int *)(img->header + 34);
+    img->colorDepth = *(unsigned short *)(img->header + 28);
+    img->dataSize = *(unsigned int *)(img->header + 34);
+    fread(img->colorTable, sizeof(unsigned char), 1024, file);
+
+    img->data = (unsigned char *)malloc(img->dataSize * sizeof(unsigned char));
+    fread(img->data, sizeof(unsigned char), img->dataSize, file);
+
     fclose(file);
     return img;
 }
+
+void bmp8_saveImage(const char * filename, t_bmp8 * img) {
+    FILE * file = fopen(filename,"wb");
+
+
+    if ( file ==  NULL ) {
+        printf("Erreur : Impossible d'ouvrir le fichier\n");
+        return;
+    }
+
+    printf("Fichier ouvert avec succès\n");
+
+    fwrite(img->header, sizeof(unsigned char), 54, file);
+    fwrite(img->colorTable, sizeof(unsigned char), 1024, file);
+    fwrite(img->data, sizeof(unsigned char), img->dataSize, file);
+
+    fclose(file);
+}
+
+void bmp8_free(t_bmp8 * img) {
+    free(img);
+}
+
 
 void bmp8_printInfo(t_bmp8 * img) {
     printf("Image Info :\n");
@@ -22,12 +58,66 @@ void bmp8_printInfo(t_bmp8 * img) {
     printf("\tSize : %d\n", img->height*img->width);
 }
 
-
-int main(){
-    t_bmp8 * bmp8;
-    bmp8 = bmp8_loadImage( "lena_color.bmp" );
-    bmp8_printInfo( bmp8 );
-
-
-  return 0;
+void bmp8_negative(t_bmp8 * img) {
+    for (int i = 0; i < img->height; i++) {
+        for (int j = 0; j < img->width; j++) {
+            img->data[i*img->width + j] = 255 - img->data[i*img->width + j];
+        }
+    }
 }
+
+void bmp8_brightness(t_bmp8 * img, int value){
+    for (int i = 0; i < img->height; i++) {
+        for (int j = 0; j < img->width; j++) {
+            if (img->data[i*img->width + j] + value > 255) {
+                img->data[i*img->width + j] = 255;
+            } else if (img->data[i*img->width + j] + value < 0){
+                img->data[i*img->width + j] = 0;
+            } else {
+                img->data[i*img->width + j] = img->data[i*img->width + j] + value;
+            }
+        }
+    }
+}
+
+void bmp8_threshold(t_bmp8 * img, int threshold) {
+    for (int i = 0; i < img->height; i++) {
+        for (int j = 0; j < img->width; j++) {
+            if (img->data[i*img->width + j] >= threshold) {
+                img->data[i*img->width + j] = 255;
+            } else {
+                img->data[i*img->width + j] = 0;
+            }
+        }
+    }
+}
+
+void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
+    int n = kernelSize/2;
+
+    unsigned char *temp = malloc(img->width * img->height *sizeof(unsigned char));
+    for (int i = 1; i < img->height-1; i++) {
+        for (int j = 1; j < img->width-1; j++) {
+            float somme = 0.0;
+            for (int ki = -n; ki <= n; ki++) {
+                for (int kj = -n; kj <= n; kj++) {
+                    int pixel = img->data[(i + ki) * img->width + (j + kj)];
+                    float coeff = kernel[ki + n][kj + n];
+                    somme += pixel * coeff;
+                }
+            }
+            temp[i * img->width + j] = (unsigned char)somme;
+        }
+    }
+
+    // Copier le résultat dans l'image
+    for (int i = 1; i < img->height - 1; i++) {
+        for (int j = 1; j < img->width - 1; j++) {
+            img->data[i * img->width + j] = temp[i * img->width + j];
+        }
+    }
+
+    free(temp); // libérer la mémoire allouée
+}
+
+
