@@ -40,7 +40,7 @@ void bmp8_saveImage(const char * filename, t_bmp8 * img) {
         return;
     }
 
-    printf("Fichier ouvert avec succès\n");
+    printf("Fichier ouvert avec succes\n");
 
     fwrite(img->header, sizeof(unsigned char), 54, file);
     fwrite(img->colorTable, sizeof(unsigned char), 1024, file);
@@ -131,4 +131,11 @@ void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
 
 //Partie 2
 
-
+t_pixel ** bmp24_allocateDataPixels (int width, int height) {
+    t_pixel ** pixels;
+    pixels = (t_pixel**)malloc(width * height * sizeof(t_pixel *));
+    if (pixels == NULL) {
+        printf("Erreur : ALlocation de mémoire impossible");
+        return NULL;
+    }
+}
