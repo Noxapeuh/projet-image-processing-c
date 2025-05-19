@@ -1,5 +1,7 @@
 // Partie 1
 
+#include <stdint.h>
+
 typedef struct {
     unsigned char header[54];
     unsigned char colorTable[1024];
@@ -22,6 +24,9 @@ void bmp8_threshold(t_bmp8 * img, int threshold);
 void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize);
 
 // Partie 2
+
+
+
 
 typedef struct {
     uint16_t type;
@@ -51,6 +56,15 @@ typedef struct {
     uint8_t blue;
 } t_pixel;
 
+typedef struct {
+    t_bmp_header header;
+    t_bmp_info header_info;
+    int width;
+    int height;
+    int colorDepth;
+    t_pixel **data;
+} t_bmp24;
+
 // Constantes pour les offsets des champs de l'en-tête BMP
 #define BITMAP_MAGIC 0x00 // offset 0
 #define BITMAP_SIZE 0x02 // offset 2
@@ -73,5 +87,4 @@ void bmp24_freeDataPixels (t_pixel ** pixels, int height);
 t_bmp24 * bmp24_allocate (int width, int height, int colorDepth);
 void bmp24_free (t_bmp24 * img);
 
-t_bmp24 * bmp24_loadImage (const char * filename);
-void bmp24_saveImage (t_bmp * img, const char * filename);
+
