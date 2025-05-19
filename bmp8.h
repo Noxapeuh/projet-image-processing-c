@@ -73,3 +73,5 @@ void bmp24_freeDataPixels (t_pixel ** pixels, int height);
 t_bmp24 * bmp24_allocate (int width, int height, int colorDepth);
 void bmp24_free (t_bmp24 * img);
 
+t_bmp24 * bmp24_loadImage (const char * filename);
+void bmp24_saveImage (t_bmp * img, const char * filename);

@@ -139,3 +139,9 @@ t_pixel ** bmp24_allocateDataPixels (int width, int height) {
         return NULL;
     }
 }
+
+t_bmp24 * bmp24_loadImage (const char * filename){
+
+}
+void bmp24_saveImage (t_bmp * img, const char * filename);
+
