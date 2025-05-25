@@ -284,3 +284,58 @@ void bmp24_sharpen(t_bmp24 *img, float **kernel, int kernelSize) {
         for (int x = 1; x < img->width - 1; x++)
             img->data[y][x] = bmp24_convolution(img, x, y, kernel, kernelSize);
 }
+
+void bmp24_equalize(t_bmp24 *img) {
+    int width = img->width;
+    int height = img->height;
+    float *Y = malloc(width * height * sizeof(float));
+    float *U = malloc(width * height * sizeof(float));
+    float *V = malloc(width * height * sizeof(float));
+    int hist[256] = {0};
+    int cdf[256] = {0};
+    int map[256];
+
+    for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++) {
+            int i = y * width + x;
+            float r = img->data[y][x].r;
+            float g = img->data[y][x].g;
+            float b = img->data[y][x].b;
+            Y[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+            U[i] = -0.14713 * r - 0.28886 * g + 0.436 * b;
+            V[i] = 0.615 * r - 0.51499 * g - 0.10001 * b;
+            hist[(int)Y[i]]++;
+        }
+
+    cdf[0] = hist[0];
+    for (int i = 1; i < 256; i++) cdf[i] = cdf[i - 1] + hist[i];
+
+    int total = width * height;
+    int cdfmin = 0;
+    for (int i = 0; i < 256; i++) {
+        if (cdf[i] > 0) {
+            cdfmin = cdf[i];
+            break;
+        }
+    }
+
+    for (int i = 0; i < 256; i++) {
+        map[i] = round((cdf[i] - cdfmin) * 255.0 / (total - cdfmin));
+    }
+
+    for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++) {
+            int i = y * width + x;
+            float yval = map[(int)Y[i]];
+            float r = yval + 1.13983 * V[i];
+            float g = yval - 0.39465 * U[i] - 0.58060 * V[i];
+            float b = yval + 2.03211 * U[i];
+            img->data[y][x].r = r > 255 ? 255 : r < 0 ? 0 : r;
+            img->data[y][x].g = g > 255 ? 255 : g < 0 ? 0 : g;
+            img->data[y][x].b = b > 255 ? 255 : b < 0 ? 0 : b;
+        }
+
+    free(Y);
+    free(U);
+    free(V);
+}
