@@ -156,7 +156,18 @@ void bmp24_freeDataPixels (t_pixel ** pixels, int height){
 }
 
 t_bmp24 * bmp24_allocate (int width, int height, int colorDepth){
-
+  t_bmp24 *img = malloc(sizeof(t_bmp24));
+    if (!img) return NULL;
+    img->data = bmp24_allocateDataPixels(width, height);
+    if (!img->data) {
+        free(img);
+        printf("Erreur d'allocation mémoire");
+        return NULL;
+    }
+    img->width = width;
+    img->height = height;
+    img->colorDepth = colorDepth;
+    return img;
 }
 
 void bmp24_free (t_bmp24 * img){
