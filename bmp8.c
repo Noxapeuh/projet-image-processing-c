@@ -339,3 +339,36 @@ void bmp24_equalize(t_bmp24 *img) {
     free(U);
     free(V);
 }
+
+unsigned int *bmp8_computeHistogram(t_bmp8 *img) {
+    unsigned int *hist = calloc(256, sizeof(unsigned int));
+    for (int i = 0; i < img->dataSize; i++) {
+        hist[img->data[i]]++;
+    }
+    return hist;
+}
+
+unsigned int *bmp8_computeCDF(unsigned int *hist) {
+    unsigned int *cdf = malloc(256 * sizeof(unsigned int));
+    unsigned int sum = 0;
+    for (int i = 0; i < 256; i++) {
+        sum += hist[i];
+        cdf[i] = sum;
+    }
+
+    unsigned int cdfmin = 0;
+    for (int i = 0; i < 256; i++) {
+        if (cdf[i] > 0) {
+            cdfmin = cdf[i];
+            break;
+        }
+    }
+
+    unsigned int *hist_eq = malloc(256 * sizeof(unsigned int));
+    for (int i = 0; i < 256; i++) {
+        hist_eq[i] = round(((double)(cdf[i] - cdfmin) / (cdf[255] - cdfmin)) * 255);
+    }
+
+    free(cdf);
+    return hist_eq;
+}
