@@ -141,13 +141,6 @@ t_pixel ** bmp24_allocateDataPixels (int width, int height) {
     }
 }
 
-t_bmp24 * bmp24_loadImage (const char * filename){
-
-}
-void bmp24_saveImage (t_bmp * img, const char * filename);
-
-
-
 void bmp24_freeDataPixels (t_pixel ** pixels, int height){
   if (pixels == NULL) return;
     for (int i = 0; i < height; ++i) {
@@ -178,4 +171,34 @@ void bmp24_free (t_bmp24 * img){
         }
         free(img->pixels);
     }
+}
+
+t_bmp24 *bmp24_loadImage(const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (!file) return NULL;
+
+    t_bmp24 *img = malloc(sizeof(t_bmp24));
+    if (!img) {
+        fclose(file);
+        return NULL;
+    }
+
+    file_rawRead(BITMAP_HEADER, &img->header, sizeof(t_bmp_header), 1, file);
+    file_rawRead(BITMAP_HEADER_INFO, &img->header_info, sizeof(t_bmp_info), 1, file);
+
+    img->width = img->header_info.width;
+    img->height = img->header_info.height;
+    img->colorDepth = img->header_info.bits;
+
+    t_pixel **data = bmp24_allocateDataPixels(img->width, img->height);
+    if (!data) {
+        free(img);
+        fclose(file);
+        return NULL;
+    }
+
+    img->data = data;
+    bmp24_readPixelData(img, file);
+    fclose(file);
+    return img;
 }
