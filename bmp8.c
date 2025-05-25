@@ -254,3 +254,21 @@ t_pixel bmp24_convolution(t_bmp24 *img, int x, int y, float **kernel, int kernel
     p.b = b > 255 ? 255 : b < 0 ? 0 : b;
     return p;
 }
+
+void bmp24_boxBlur(t_bmp24 *img, float **kernel, int kernelSize) {
+    for (int y = 1; y < img->height - 1; y++)
+        for (int x = 1; x < img->width - 1; x++)
+            img->data[y][x] = bmp24_convolution(img, x, y, kernel, kernelSize);
+}
+
+void bmp24_gaussianBlur(t_bmp24 *img, float **kernel, int kernelSize) {
+    for (int y = 1; y < img->height - 1; y++)
+        for (int x = 1; x < img->width - 1; x++)
+            img->data[y][x] = bmp24_convolution(img, x, y, kernel, kernelSize);
+}
+
+void bmp24_outline(t_bmp24 *img, float **kernel, int kernelSize) {
+    for (int y = 1; y < img->height - 1; y++)
+        for (int x = 1; x < img->width - 1; x++)
+            img->data[y][x] = bmp24_convolution(img, x, y, kernel, kernelSize);
+}
