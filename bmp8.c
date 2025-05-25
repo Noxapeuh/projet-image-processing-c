@@ -2,7 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <math.h>
+// Constantes pour les offsets des champs de l'en-tête BMP
+#define BITMAP_MAGIC 0x00 // offset 0
+#define BITMAP_SIZE 0x02 // offset 2
+#define BITMAP_OFFSET 0x0A // offset 10
+#define BITMAP_WIDTH 0x12 // offset 18
+#define BITMAP_HEIGHT 0x16 // offset 22
+#define BITMAP_DEPTH 0x1C // offset 28
+#define BITMAP_SIZE_RAW 0x22 // offset 34
+// Constante pour le type de fichier BMP
+#define BMP_TYPE 0x4D42 // 'BM' en hexadécimal
+// Constantes pour les tailles des champs de l'en-tête BMP
+#define HEADER_SIZE 0x0E // 14 octets
+#define INFO_SIZE 0x28 // 40 octets
+// Constantes pour les valeurs de profondeur de couleur
+#define DEFAULT_DEPTH 0x18 // 24
 
 //Partie 1
 
@@ -103,11 +118,16 @@ void bmp8_threshold(t_bmp8 * img, int threshold) {
 
 // Fonction permettant d'appliquer n'importe quel filtre à partir de son noyau sur une image BMP passée en paramètre
 void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
-    int n = kernelSize/2;
+    int n = kernelSize / 2;
 
-    unsigned char *temp = malloc(img->width * img->height *sizeof(unsigned char));
-    for (int i = 1; i < img->height-1; i++) {
-        for (int j = 1; j < img->width-1; j++) {
+    unsigned char *temp = malloc(img->width * img->height * sizeof(unsigned char));
+    if (!temp) {
+        printf("Erreur d'allocation mémoire\n");
+        return;
+    }
+
+    for (int i = 1; i < img->height - 1; i++) {
+        for (int j = 1; j < img->width - 1; j++) {
             float somme = 0.0;
             for (int ki = -n; ki <= n; ki++) {
                 for (int kj = -n; kj <= n; kj++) {
@@ -116,7 +136,12 @@ void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
                     somme += pixel * coeff;
                 }
             }
-            temp[i * img->width + j] = (unsigned char)somme;
+
+            // Clamp entre 0 et 255
+            if (somme < 0) somme = 0;
+            if (somme > 255) somme = 255;
+
+            temp[i * img->width + j] = (unsigned char)(somme);
         }
     }
 
@@ -131,6 +156,99 @@ void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
 }
 
 //Partie 2
+
+
+
+/*
+* @brief Positionne le curseur de fichier à la position position dans le fichier file,
+* puis lit n éléments de taille size dans buffer.
+* @param position La position à partir de laquelle il faut lire dans file.
+* @param buffer Le buffer pour stocker les données lues.
+* @param size La taille de chaque élément à lire.
+* @param n Le nombre d'éléments à lire.
+* @param file Le descripteur de fichier dans lequel il faut lire.
+* @return void
+*/
+void file_rawRead (uint32_t position, void * buffer, uint32_t size, size_t n, FILE * file) {
+    fseek(file, position, SEEK_SET);
+    fread(buffer, size, n, file);
+}
+/*
+* @brief Positionne le curseur de fichier à la position position dans le fichier file,
+* puis écrit n éléments de taille size depuis le buffer.
+* @param position La position à partir de laquelle il faut écrire dans file.
+* @param buffer Le buffer contenant les éléments à écrire.
+* @param size La taille de chaque élément à écrire.
+* @param n Le nombre d'éléments à écrire.
+* @param file Le descripteur de fichier dans lequel il faut écrire.
+* @return void
+*/
+void file_rawWrite (uint32_t position, void * buffer, uint32_t size, size_t n, FILE * file) {
+    fseek(file, position, SEEK_SET);
+    fwrite(buffer, size, n, file);
+}
+
+void bmp24_readPixelValue(t_bmp24 *image, int x, int y, FILE *file) {
+    int rowSize = ((image->width * 3 + 3) / 4) * 4;
+    int offset = 14 + 40 + (image->height - 1 - y) * rowSize + x * 3;
+
+    fseek(file, offset, SEEK_SET);
+
+    fread(&image->data[y][x].b, 1, 1, file);
+    fread(&image->data[y][x].g, 1, 1, file);
+    fread(&image->data[y][x].r, 1, 1, file);
+}
+
+
+void bmp24_writePixelValue(t_bmp24 *image, int x, int y, FILE *file) {
+    int rowSize = ((image->width * 3 + 3) / 4) * 4;
+    int offset = 14 + 40 + (image->height - 1 - y) * rowSize + x * 3;
+
+    fseek(file, offset, SEEK_SET);
+
+    fwrite(&image->data[y][x].b, 1, 1, file);
+    fwrite(&image->data[y][x].g, 1, 1, file);
+    fwrite(&image->data[y][x].r, 1, 1, file);
+}
+
+
+void bmp24_readPixelData(t_bmp24 *image, FILE *file) {
+    int rowSize = ((image->width * 3 + 3) / 4) * 4;
+    int padding = rowSize - image->width * 3;
+
+    int offset = 14 + 40;
+    fseek(file, offset, SEEK_SET);
+
+    for (int y = image->height - 1; y >= 0; y--) {
+        for (int x = 0; x < image->width; x++) {
+            fread(&image->data[y][x].b, 1, 1, file);
+            fread(&image->data[y][x].g, 1, 1, file);
+            fread(&image->data[y][x].r, 1, 1, file);
+        }
+        fseek(file, padding, SEEK_CUR);
+    }
+}
+
+
+void bmp24_writePixelData(t_bmp24 *image, FILE *file) {
+    int rowSize = ((image->width * 3 + 3) / 4) * 4;
+    int padding = rowSize - image->width * 3;
+    uint8_t pad[3] = {0, 0, 0}; // au maximum 3 octets de padding
+
+    int offset = 14 + 40;
+    fseek(file, offset, SEEK_SET);
+
+    for (int y = image->height - 1; y >= 0; y--) {
+        for (int x = 0; x < image->width; x++) {
+            fwrite(&image->data[y][x].b, 1, 1, file);
+            fwrite(&image->data[y][x].g, 1, 1, file);
+            fwrite(&image->data[y][x].r, 1, 1, file);
+        }
+        fwrite(pad, 1, padding, file);
+    }
+}
+
+
 
 t_pixel ** bmp24_allocateDataPixels (int width, int height) {
     t_pixel ** pixels;
@@ -164,55 +282,78 @@ t_bmp24 * bmp24_allocate (int width, int height, int colorDepth){
 }
 
 void bmp24_free (t_bmp24 * img){
-  if (img == NULL) return NULL;
-    if (img->pixels != NULL){
+    if (img->data != NULL){
         for (int i=0; i<img->height;++i) {
-            free(img->pixels[i]);
+            free(img->data[i]);
         }
-        free(img->pixels);
+        free(img->data);
     }
 }
 
 t_bmp24 *bmp24_loadImage(const char *filename) {
     FILE *file = fopen(filename, "rb");
-    if (!file) return NULL;
+    if (!file) {
+        printf("Erreur : impossible d'ouvrir le fichier %s\n", filename);
+        return NULL;
+    }
 
+    // Lire largeur, hauteur, profondeur
+    int32_t width, height;
+    uint16_t bits;
+
+    file_rawRead(BITMAP_WIDTH, &width, sizeof(int32_t), 1, file);
+    file_rawRead(BITMAP_HEIGHT, &height, sizeof(int32_t), 1, file);
+    file_rawRead(BITMAP_DEPTH, &bits, sizeof(uint16_t), 1, file);
+
+    if (bits != 24) {
+        printf("Erreur : l'image n'est pas en 24 bits (bits = %d)\n", bits);
+        fclose(file);
+        return NULL;
+    }
+
+    // Allouer la structure
     t_bmp24 *img = malloc(sizeof(t_bmp24));
     if (!img) {
+        printf("Erreur : allocation mémoire échouée\n");
         fclose(file);
         return NULL;
     }
 
-    file_rawRead(BITMAP_HEADER, &img->header, sizeof(t_bmp_header), 1, file);
-    file_rawRead(BITMAP_HEADER_INFO, &img->header_info, sizeof(t_bmp_info), 1, file);
+    img->width = width;
+    img->height = height;
+    img->colorDepth = bits;
 
-    img->width = img->header_info.width;
-    img->height = img->header_info.height;
-    img->colorDepth = img->header_info.bits;
+    // Lire les headers
+    file_rawRead(0, &img->header, sizeof(t_bmp_header), 1, file);
+    file_rawRead(14, &img->header_info, sizeof(t_bmp_info), 1, file);
 
-    t_pixel **data = bmp24_allocateDataPixels(img->width, img->height);
-    if (!data) {
+    // Allouer les pixels
+    img->data = bmp24_allocateDataPixels(img->width, img->height);
+    if (!img->data) {
+        printf("Erreur : allocation des pixels échouée\n");
+        fclose(file);
         free(img);
-        fclose(file);
         return NULL;
     }
 
-    img->data = data;
+    // Lire les pixels
     bmp24_readPixelData(img, file);
+
     fclose(file);
     return img;
 }
 
-void bmp24_saveImage(t_bmp *img, const char *filename) {
+
+void bmp24_saveImage(t_bmp24 *img, const char *filename) {
     FILE *file = fopen(filename, "wb");
     if (!file) return;
-    file_rawWrite(BITMAP_HEADER, &img->header, sizeof(t_bmp_header), 1, file);
-    file_rawWrite(BITMAP_HEADER_INFO, &img->header_info, sizeof(t_bmp_info), 1, file);
+    file_rawWrite(0, &img->header, sizeof(t_bmp_header), 1, file);
+    file_rawWrite(14, &img->header_info, sizeof(t_bmp_info), 1, file);
     bmp24_writePixelData(img, file);
     fclose(file);
 }
 
-void bmp24_negative(t_bmp *img) {
+void bmp24_negative(t_bmp24 *img) {
     for (int y = 0; y < img->height; y++)
         for (int x = 0; x < img->width; x++) {
             img->data[y][x].r = 255 - img->data[y][x].r;
@@ -222,7 +363,7 @@ void bmp24_negative(t_bmp *img) {
 }
 
 
-void bmp24_brightness(t_bmp *img, int value) {
+void bmp24_brightness(t_bmp24 *img, int value) {
     for (int y = 0; y < img->height; y++)
         for (int x = 0; x < img->width; x++) {
             int r = img->data[y][x].r + value;
@@ -283,98 +424,4 @@ void bmp24_sharpen(t_bmp24 *img, float **kernel, int kernelSize) {
     for (int y = 1; y < img->height - 1; y++)
         for (int x = 1; x < img->width - 1; x++)
             img->data[y][x] = bmp24_convolution(img, x, y, kernel, kernelSize);
-}
-
-void bmp24_equalize(t_bmp24 *img) {
-    int width = img->width;
-    int height = img->height;
-    float *Y = malloc(width * height * sizeof(float));
-    float *U = malloc(width * height * sizeof(float));
-    float *V = malloc(width * height * sizeof(float));
-    int hist[256] = {0};
-    int cdf[256] = {0};
-    int map[256];
-
-    for (int y = 0; y < height; y++)
-        for (int x = 0; x < width; x++) {
-            int i = y * width + x;
-            float r = img->data[y][x].r;
-            float g = img->data[y][x].g;
-            float b = img->data[y][x].b;
-            Y[i] = 0.299 * r + 0.587 * g + 0.114 * b;
-            U[i] = -0.14713 * r - 0.28886 * g + 0.436 * b;
-            V[i] = 0.615 * r - 0.51499 * g - 0.10001 * b;
-            hist[(int)Y[i]]++;
-        }
-
-    cdf[0] = hist[0];
-    for (int i = 1; i < 256; i++) cdf[i] = cdf[i - 1] + hist[i];
-
-    int total = width * height;
-    int cdfmin = 0;
-    for (int i = 0; i < 256; i++) {
-        if (cdf[i] > 0) {
-            cdfmin = cdf[i];
-            break;
-        }
-    }
-
-    for (int i = 0; i < 256; i++) {
-        map[i] = round((cdf[i] - cdfmin) * 255.0 / (total - cdfmin));
-    }
-
-    for (int y = 0; y < height; y++)
-        for (int x = 0; x < width; x++) {
-            int i = y * width + x;
-            float yval = map[(int)Y[i]];
-            float r = yval + 1.13983 * V[i];
-            float g = yval - 0.39465 * U[i] - 0.58060 * V[i];
-            float b = yval + 2.03211 * U[i];
-            img->data[y][x].r = r > 255 ? 255 : r < 0 ? 0 : r;
-            img->data[y][x].g = g > 255 ? 255 : g < 0 ? 0 : g;
-            img->data[y][x].b = b > 255 ? 255 : b < 0 ? 0 : b;
-        }
-
-    free(Y);
-    free(U);
-    free(V);
-}
-
-unsigned int *bmp8_computeHistogram(t_bmp8 *img) {
-    unsigned int *hist = calloc(256, sizeof(unsigned int));
-    for (int i = 0; i < img->dataSize; i++) {
-        hist[img->data[i]]++;
-    }
-    return hist;
-}
-
-unsigned int *bmp8_computeCDF(unsigned int *hist) {
-    unsigned int *cdf = malloc(256 * sizeof(unsigned int));
-    unsigned int sum = 0;
-    for (int i = 0; i < 256; i++) {
-        sum += hist[i];
-        cdf[i] = sum;
-    }
-
-    unsigned int cdfmin = 0;
-    for (int i = 0; i < 256; i++) {
-        if (cdf[i] > 0) {
-            cdfmin = cdf[i];
-            break;
-        }
-    }
-
-    unsigned int *hist_eq = malloc(256 * sizeof(unsigned int));
-    for (int i = 0; i < 256; i++) {
-        hist_eq[i] = round(((double)(cdf[i] - cdfmin) / (cdf[255] - cdfmin)) * 255);
-    }
-
-    free(cdf);
-    return hist_eq;
-}
-
-void bmp8_equalize(t_bmp8 *img, unsigned int *hist_eq) {
-    for (int i = 0; i < img->dataSize; i++) {
-        img->data[i] = hist_eq[img->data[i]];
-    }
 }

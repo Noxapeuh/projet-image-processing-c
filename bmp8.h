@@ -1,6 +1,7 @@
 // Partie 1
 
 #include <stdint.h>
+#include <stdio.h>
 
 typedef struct {
     unsigned char header[54];
@@ -51,9 +52,9 @@ typedef struct {
 } t_bmp_info;
 
 typedef struct {
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 } t_pixel;
 
 typedef struct {
@@ -87,4 +88,16 @@ void bmp24_freeDataPixels (t_pixel ** pixels, int height);
 t_bmp24 * bmp24_allocate (int width, int height, int colorDepth);
 void bmp24_free (t_bmp24 * img);
 
+void bmp24_readPixelValue (t_bmp24 * image, int x, int y, FILE * file);
+void bmp24_readPixelData (t_bmp24 * image, FILE * file);
+void bmp24_writePixelValue (t_bmp24 * image, int x, int y, FILE * file);
+void bmp24_writePixelData (t_bmp24 * image, FILE * file);
 
+void bmp24_negative (t_bmp24 * img);
+void bmp24_grayscale (t_bmp24 * img);
+void bmp24_brightness (t_bmp24 * img, int value);
+
+t_pixel bmp24_convolution (t_bmp24 * img, int x, int y, float ** kernel, int kernelSize);
+
+t_bmp24 * bmp24_loadImage (const char * filename);
+void bmp24_saveImage (t_bmp24 * img, const char * filename);
