@@ -7,6 +7,7 @@
 //Partie 1
 
 // Fonction permettant de charger une image BMP depuis un fichier filename, renvoyant l'image chargée
+
 t_bmp8 * bmp8_loadImage(const char * filename) {
     FILE *file = fopen(filename, "rb");
     if (file == NULL) {
@@ -135,7 +136,7 @@ t_pixel ** bmp24_allocateDataPixels (int width, int height) {
     t_pixel ** pixels;
     pixels = (t_pixel**)malloc(width * height * sizeof(t_pixel *));
     if (pixels == NULL) {
-        printf("Erreur : ALlocation de mémoire impossible");
+        printf("Erreur : Allocation de mémoire impossible");
         return NULL;
     }
 }
@@ -145,3 +146,25 @@ t_bmp24 * bmp24_loadImage (const char * filename){
 }
 void bmp24_saveImage (t_bmp * img, const char * filename);
 
+
+
+void bmp24_freeDataPixels (t_pixel ** pixels, int height){
+  if (pixels == NULL) return;
+    for (int i = 0; i < height; ++i) {
+        free(pixels[i]);
+    }
+}
+
+t_bmp24 * bmp24_allocate (int width, int height, int colorDepth){
+
+}
+
+void bmp24_free (t_bmp24 * img){
+  if (img == NULL) return NULL;
+    if (img->pixels != NULL){
+        for (int i=0; i<img->height;++i) {
+            free(img->pixels[i]);
+        }
+        free(img->pixels);
+    }
+}
