@@ -220,3 +220,37 @@ void bmp24_negative(t_bmp *img) {
             img->data[y][x].b = 255 - img->data[y][x].b;
         }
 }
+
+
+void bmp24_brightness(t_bmp *img, int value) {
+    for (int y = 0; y < img->height; y++)
+        for (int x = 0; x < img->width; x++) {
+            int r = img->data[y][x].r + value;
+            int g = img->data[y][x].g + value;
+            int b = img->data[y][x].b + value;
+            img->data[y][x].r = r > 255 ? 255 : r < 0 ? 0 : r;
+            img->data[y][x].g = g > 255 ? 255 : g < 0 ? 0 : g;
+            img->data[y][x].b = b > 255 ? 255 : b < 0 ? 0 : b;
+        }
+}
+
+t_pixel bmp24_convolution(t_bmp24 *img, int x, int y, float **kernel, int kernelSize) {
+    int n = kernelSize / 2;
+    float r = 0, g = 0, b = 0;
+    for (int i = -n; i <= n; i++) {
+        for (int j = -n; j <= n; j++) {
+            int xi = x + i;
+            int yj = y + j;
+            if (xi >= 0 && xi < img->width && yj >= 0 && yj < img->height) {
+                r += img->data[yj][xi].r * kernel[i + n][j + n];
+                g += img->data[yj][xi].g * kernel[i + n][j + n];
+                b += img->data[yj][xi].b * kernel[i + n][j + n];
+            }
+        }
+    }
+    t_pixel p;
+    p.r = r > 255 ? 255 : r < 0 ? 0 : r;
+    p.g = g > 255 ? 255 : g < 0 ? 0 : g;
+    p.b = b > 255 ? 255 : b < 0 ? 0 : b;
+    return p;
+}
