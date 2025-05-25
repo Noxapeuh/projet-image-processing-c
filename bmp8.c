@@ -372,3 +372,9 @@ unsigned int *bmp8_computeCDF(unsigned int *hist) {
     free(cdf);
     return hist_eq;
 }
+
+void bmp8_equalize(t_bmp8 *img, unsigned int *hist_eq) {
+    for (int i = 0; i < img->dataSize; i++) {
+        img->data[i] = hist_eq[img->data[i]];
+    }
+}
