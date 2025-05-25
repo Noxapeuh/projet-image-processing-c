@@ -202,3 +202,21 @@ t_bmp24 *bmp24_loadImage(const char *filename) {
     fclose(file);
     return img;
 }
+
+void bmp24_saveImage(t_bmp *img, const char *filename) {
+    FILE *file = fopen(filename, "wb");
+    if (!file) return;
+    file_rawWrite(BITMAP_HEADER, &img->header, sizeof(t_bmp_header), 1, file);
+    file_rawWrite(BITMAP_HEADER_INFO, &img->header_info, sizeof(t_bmp_info), 1, file);
+    bmp24_writePixelData(img, file);
+    fclose(file);
+}
+
+void bmp24_negative(t_bmp *img) {
+    for (int y = 0; y < img->height; y++)
+        for (int x = 0; x < img->width; x++) {
+            img->data[y][x].r = 255 - img->data[y][x].r;
+            img->data[y][x].g = 255 - img->data[y][x].g;
+            img->data[y][x].b = 255 - img->data[y][x].b;
+        }
+}
