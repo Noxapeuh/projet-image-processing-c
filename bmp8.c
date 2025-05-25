@@ -272,3 +272,15 @@ void bmp24_outline(t_bmp24 *img, float **kernel, int kernelSize) {
         for (int x = 1; x < img->width - 1; x++)
             img->data[y][x] = bmp24_convolution(img, x, y, kernel, kernelSize);
 }
+
+void bmp24_emboss(t_bmp24 *img, float **kernel, int kernelSize) {
+    for (int y = 1; y < img->height - 1; y++)
+        for (int x = 1; x < img->width - 1; x++)
+            img->data[y][x] = bmp24_convolution(img, x, y, kernel, kernelSize);
+}
+
+void bmp24_sharpen(t_bmp24 *img, float **kernel, int kernelSize) {
+    for (int y = 1; y < img->height - 1; y++)
+        for (int x = 1; x < img->width - 1; x++)
+            img->data[y][x] = bmp24_convolution(img, x, y, kernel, kernelSize);
+}
