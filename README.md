@@ -48,12 +48,6 @@ ___
 
 ## ⚙️ Instructions d’exécution
 
-Lancer le programme :
-
-```bash
-Mets le truc pour lancer le programme ici
-```
-
 Suivre le menu :
 
 ```
@@ -87,4 +81,3 @@ Ce dépôt respecte les critères du dépot final :
 
 - Le projet nous a permis de comprendre le fonctionnement des fichier bmp8 et bmp24
 - Nous avons appris comment exploiter de l'IA (pour trouver le problème dans notre code ou bien pour nous donner des méthodes qui sont plus efficaces et simplifié)
-- (Cyril continue et donne ton avis)
